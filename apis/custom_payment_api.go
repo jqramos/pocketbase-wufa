@@ -23,7 +23,7 @@ func PaymentApiRoutes(app core.App, rg *echo.Group) {
 	)
 
 	subGroup.POST("", api.cErr)
-	subGroup.POST("schedule/:id", api.createLoanSchedule)
+	subGroup.POST("pay/:id", api.createLoanSchedule, RequireSameContextRecordAuth())
 }
 
 type paymentRecordApi struct {
