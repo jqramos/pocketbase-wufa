@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/pocketbase/pocketbase/tools/types"
 
@@ -113,7 +114,9 @@ func getDates(startDate types.DateTime) []types.DateTime {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//1 day and 8 hours
 	var trueStart = startDate.Time().AddDate(0, 0, 1)
+	trueStart = trueStart.Add(time.Hour * 8)
 	//increment one  week 8 times
 	for i := 0; i < 8; i++ {
 		//add one week to startDate
@@ -122,8 +125,7 @@ func getDates(startDate types.DateTime) []types.DateTime {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		log.Println(trueStart.Format("2006-01-02 15:04:05"))
+		log.Println(trueStart.Format("2006-01-02 08:00:00"))
 		//append to dates
 		dates = append(dates, convDate)
 	}
