@@ -2,6 +2,8 @@ package wufa_api
 
 import (
 	"log"
+    "encoding/csv"
+	loan_service "myapp/wufa_core"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
@@ -39,6 +41,7 @@ func BindPaymentApiRoutes(app core.App, rg *echo.Group) {
 	)
 
 	subGroup.POST("/pay/:id", api.markAsPaid)
+	subGroup.POST("/batch-file", api.batchFileProcess)
 }
 
 type paymentRecordApi struct {
@@ -48,6 +51,8 @@ type paymentRecordApi struct {
 func (api *paymentRecordApi) cErr(c echo.Context) error {
 	return apis.NewNotFoundError("Error message 1", "Custom: Missing Id")
 }
+
+
 
 func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 	data := apis.RequestInfo(c).Data
@@ -145,5 +150,45 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 
 	//return success
 	return c.JSON(200, map[string]any{"message": "Success"})
+
+}
+
+func (api *paymentRecordApi) batchFileProcess(c echo.Context) error{
+
+	//get file from request
+	file, err := c.FormFile("file")
+	if err != nil {
+		log.Fatalf("failed to expand: %v", err)
+		return apis.NewNotFoundError("Error message 1", "Custom: Missing file")
+	}
+	//check if file is csv
+	if file.Header.Get("Content-Type") != "text/csv" {
+		log.Fatalf("failed to expand: %v", err)
+		return apis.NewNotFoundError("Error message 2", "Custom: Invalid file type")
+	}
+
+	//open file
+	src, err := file.Open()
+	if err != nil {
+		log.Fatalf("failed to expand: %v", err)
+		return apis.NewNotFoundError("Error message 3", "Custom: Failed to open file")
+	}
+
+	//read file
+	reader := csv.NewReader(src)
+
+	//get all records
+	records, err := reader.ReadAll()
+	if err != nil {
+		log.Fatalf("failed to expand: %v", err)
+		return apis.NewNotFoundError("Error message 4", "Custom: Failed to read file")
+	}
+
+	//pass records to loan_service
+	result, err := loan_service.LoadCSVFileToData(records)
+
+	//return result
+	return c.JSON(200, map[string]any{"message": "Success", "result": result})
+	
 
 }
