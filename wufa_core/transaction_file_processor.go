@@ -1,51 +1,53 @@
 package loan_service
 
 import (
+	"github.com/pocketbase/pocketbase/tools/types"
 	"log"
 	"mime/multipart"
+	"strconv"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 	"github.com/xuri/excelize/v2"
 )
 
-//enum for cell column
+// enum for cell column
 const (
-	TransactionDate int = 0
-	Amount = 1
-	LoanedAmount = 2
-	PaymentType = 3
-	InvestorName = 4
-	CustomerName = 5
-	IsAdvancePayment = 6
-	StartDate = 7
+	TransactionDate  int = 0
+	Amount               = 1
+	LoanedAmount         = 2
+	PaymentType          = 3
+	InvestorName         = 4
+	CustomerName         = 5
+	IsAdvancePayment     = 6
+	StartDate            = 7
 )
 
 const (
-	CREDIT string = "CREDIT"
-	DEBIT = "DEBIT"
-	PENDING = "PENDING"
+	CREDIT  string = "CREDIT"
+	DEBIT          = "DEBIT"
+	PENDING        = "PENDING"
 )
 
-//struct for excel data
+// struct for excel data
 type TransData struct {
-	TransactionDate string
-	Amount string
-	LoanedAmount string
-	PaymentType string
-	InvestorName string
-	CustomerName string
+	TransactionDate  string
+	Amount           float64
+	LoanedAmount     string
+	PaymentType      string
+	InvestorName     string
+	CustomerName     string
 	IsAdvancePayment string
-	StartDate string
+	StartDate        string
 }
+
 const customerCollectionNameOrId = "customers"
 
 type processorApp struct {
 	app core.App
 }
 
-
-//load excel file to data accepts file
+// load excel file to data accepts file
 func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, error) {
 	log.Println(file.Filename)
 	//set app to processorApp
@@ -55,150 +57,151 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 	if err != nil {
 		log.Println(err)
 		return "", err
-	}	
+	}
 
-	
 	f, err := excelize.OpenReader(fileReader)
 	if err != nil {
-        log.Println(err)
-        return "", err
-    }
+		log.Println(err)
+		return "", err
+	}
 
-    defer func() {
-        // Close the spreadsheet.
-        if err := f.Close(); err != nil {
-            log.Println(err)
-        }
-    }()
-	
-    // Get all the rows in the Sheet1.
-    rows, err := f.GetRows("Sheet1")
-    if err != nil {
-        log.Println(err)
-        return "", err
-    }
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
-    for idx, row := range rows {
-		if(idx != 0){
-			for i, colCell := range row {		
+	// Get all the rows in the Sheet1.
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	for idx, row := range rows {
+		if idx != 0 {
+			for i, colCell := range row {
 				//declare empty object transData
 				transData := new(TransData)
 				//switch case for column
 				switch i {
-					case TransactionDate:
-						transData.TransactionDate = colCell
-						log.Println("TransactionDate", colCell)
-					case Amount:
-						transData.Amount = colCell
-						log.Println("Amount", colCell)
-					case LoanedAmount:
-						transData.LoanedAmount = colCell
-						log.Println("LoanedAmount", colCell)
-					case PaymentType:
-						transData.PaymentType = colCell
-						log.Println("PaymentType", colCell)
-					case InvestorName:
-						transData.InvestorName = colCell
-						log.Println("InvestorName", colCell)
-					case CustomerName:
-						transData.CustomerName = colCell
-						log.Println("CustomerName", colCell)
-					case IsAdvancePayment:
-						transData.IsAdvancePayment = colCell
-						log.Println("IsAdvancePayment", colCell)
-					case StartDate:
-						transData.StartDate = colCell
-						log.Println("StartDate", colCell)
+				case TransactionDate:
+					transData.TransactionDate = colCell
+					log.Println("TransactionDate", colCell)
+				case Amount:
+					//convert to float
+					transData.Amount, err = strconv.ParseFloat(colCell, 64)
+					if err != nil {
+						log.Println(err)
+						return "", err
+					}
+					log.Println("Amount", colCell)
+				case LoanedAmount:
+					transData.LoanedAmount = colCell
+					log.Println("LoanedAmount", colCell)
+				case PaymentType:
+					transData.PaymentType = colCell
+					log.Println("PaymentType", colCell)
+				case InvestorName:
+					transData.InvestorName = colCell
+					log.Println("InvestorName", colCell)
+				case CustomerName:
+					transData.CustomerName = colCell
+					log.Println("CustomerName", colCell)
+				case IsAdvancePayment:
+					transData.IsAdvancePayment = colCell
+					log.Println("IsAdvancePayment", colCell)
+				case StartDate:
+					transData.StartDate = colCell
+					log.Println("StartDate", colCell)
 				}
-				service.runDataLoadProcess(*transData)
+				_, err := service.runDataLoadProcess(*transData)
+				if err != nil {
+					log.Println(err)
+					return "", err
+				}
 			}
 		}
-        log.Println("next row")
-    }
+		log.Println("next row")
+	}
 	return "", nil
 }
 
-func (service *processorApp) runDataLoadProcess(transData TransData) (string) {
+func (service *processorApp) runDataLoadProcess(transData TransData) (string, error) {
 	//validate customer name
-	if(transData.CustomerName == ""){
+	if transData.CustomerName == "" {
 		log.Println("Customer name is empty")
-		return "Error: Customer name is empty"
+		return "Error: Customer name is empty", nil
 	}
 	//find customer record
-	customerRecord, err := service.app.Dao().FindFirstRecordByData(customerCollectionNameOrId, "customerName", transData.CustomerName )
+	customerRecord, err := service.app.Dao().FindFirstRecordByData(customerCollectionNameOrId, "customerName", transData.CustomerName)
 	if err != nil {
 		log.Println(err)
-		return "Error: Customer record not found"
+		return "Error: Customer record not found", nil
 	}
 	var isNewCustomer = false
-	var isNewLoan = false
 	//check if customer record is nil
-	if(customerRecord == nil){
+	if customerRecord == nil {
 		log.Println("Customer is new")
 		isNewCustomer = true
-		customerRecord = service.createNewCustomer(customerRecord,transData)
-		
+		customerRecord = service.createNewCustomer(customerRecord, transData)
+
 	} else {
-	    result, err := service.processInvestorTransaction(transData)
+		result, err := service.processInvestorTransaction(transData)
 		if err != nil {
 			log.Println(err)
-			return "Error: Failed to process investor transaction"
+			return "Error: Failed to process investor transaction", nil
 		}
-		return result
+		return result, nil
 	}
 
-	if(!isNewCustomer) {
+	if !isNewCustomer {
 		//get loans
-		loans, err := service.app.Dao().FindRecordsByFilter(loanCollectionNameOrId, 
-		"status = 'ONGOING'", "", 100)
+		loans, err := service.app.Dao().FindRecordsByFilter(loanCollectionNameOrId,
+			"status = 'ONGOING'", "", 100)
 		if err != nil {
 			log.Println(err)
-			return "Error: Failed to get loans"
+			return "Error: Failed to get loans", nil
 		}
 
 		//check result
 		if len(loans) == 0 {
 			log.Println("No loans found")
-			isNewLoan = true
+			//process new loan
 			return service.processNewLoan(customerRecord, transData)
-		} else if(loans >= 1) {
+		} else if len(loans) >= 1 {
 			log.Println("Loan found")
 			var isLastPayment = len(loans) == 1
 			return service.processExistingLoan(customerRecord, transData, isLastPayment)
 		}
 	}
+	return "", nil
 }
 
-
-func (service *processorApp) processExistingLoan(customerRecord *models.Record, transData TransData,isLastPayment bool) (string, error) {
+func (service *processorApp) processExistingLoan(customerRecord *models.Record, transData TransData, isLastPayment bool) (string, error) {
 	//get investor record
-	investorRecord, err := service.app.Dao().FindFirstRecordByData(investorCollectionNameOrId, "investorName", transData.InvestorName )
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	//get loan collection
-	loanCollection, err := service.app.Dao().FindCollectionByNameOrId(loanCollectionNameOrId)
+	investorRecord, err := service.app.Dao().FindFirstRecordByData(investorCollectionNameOrId, "investorName", transData.InvestorName)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
 	//get loan record
-	loanRecord, err := service.app.Dao().FindFirstRecordByData(loanCollectionNameOrId, "customer", customerRecord.Id() )
+	loanRecord, err := service.app.Dao().FindFirstRecordByData(loanCollectionNameOrId, "customer", customerRecord.GetId())
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
 
 	//check if debit or credit
-	if(transData.PaymentType == "DEBIT") {
+	if transData.PaymentType == "DEBIT" {
 		//should not be here
 		log.Println("Should not be here")
-	} else if(transData.PaymentType == "CREDIT") {
+	} else if transData.PaymentType == "CREDIT" {
 		//update loan record
-		loanRecord.Set("remainingBalance", loanRecord.Get("remainingBalance") - transData.Amount)
-		loanRecord.Set("paidAmount", loanRecord.Get("paidAmount") + transData.Amount)
-		if(isLastPayment) {
+		loanRecord.Set("remainingBalance", loanRecord.GetFloat("remainingBalance")-transData.Amount)
+		loanRecord.Set("paidAmount", loanRecord.GetFloat("paidAmount")+transData.Amount)
+		if isLastPayment {
 			loanRecord.Set("status", "Completed")
 			loanRecord.Set("endDate", transData.TransactionDate)
 		}
@@ -211,8 +214,8 @@ func (service *processorApp) processExistingLoan(customerRecord *models.Record, 
 		}
 
 		//update investor record
-		investorRecord.Set("investmentBalance", investorRecord.Get("investmentBalance") + transData.Amount)
-		investorRecord.Set("loanedAmount", investorRecord.Get("loanedAmount") - transData.Amount)
+		investorRecord.Set("investmentBalance", investorRecord.GetFloat("investmentBalance")+transData.Amount)
+		investorRecord.Set("loanedAmount", investorRecord.GetFloat("loanedAmount")-transData.Amount)
 		//save investor record
 		err = service.app.Dao().SaveRecord(investorRecord)
 		if err != nil {
@@ -223,6 +226,7 @@ func (service *processorApp) processExistingLoan(customerRecord *models.Record, 
 		service.createNewTransaction(transData)
 		return "Success: Transaction processed successfully", nil
 	}
+	return "", nil
 
 }
 
@@ -235,12 +239,12 @@ func (service *processorApp) processNewLoan(customerRecord *models.Record, trans
 	}
 	//create loan record
 	loanRecord := models.NewRecord(loanCollection)
-	loanRecord.Set("customer", customerRecord.Id())
+	loanRecord.Set("customer", customerRecord.GetId())
 	loanRecord.Set("loanAmount", transData.LoanedAmount)
 	loanRecord.Set("status", "ONGOING")
 	loanRecord.Set("investor", transData.InvestorName)
 	//convert string to time
-	var startDate = types.ParseDateTime(transData.StartDate)
+	var startDate, _ = types.ParseDateTime(transData.StartDate)
 	loanRecord.Set("startDate", startDate)
 	loanRecord.Set("renewalCount", 0)
 	loanRecord.Set("remainingBalance", transData.LoanedAmount)
@@ -254,7 +258,7 @@ func (service *processorApp) processNewLoan(customerRecord *models.Record, trans
 	return "Success", nil
 }
 
-func (service *processorApp) createNewCustomer(customerRecord *models.Record,transData TransData) (*models.Record){
+func (service *processorApp) createNewCustomer(customerRecord *models.Record, transData TransData) *models.Record {
 	//get collection
 	customerCollection, err := service.app.Dao().FindCollectionByNameOrId(customerCollectionNameOrId)
 	if err != nil {
@@ -275,34 +279,32 @@ func (service *processorApp) createNewCustomer(customerRecord *models.Record,tra
 
 func (service *processorApp) processInvestorTransaction(transData TransData) (string, error) {
 	//get investor record
-	investorRecord, err := service.app.Dao().FindFirstRecordByData(investorCollectionNameOrId, "investorName", transData.InvestorName )
+	investorRecord, err := service.app.Dao().FindFirstRecordByData(investorCollectionNameOrId, "investorName", transData.InvestorName)
 	if err != nil {
 		log.Println(err)
 		return "Error: Investor record not found", err
 	}
 	//check if investor record is nil
-	if(investorRecord == nil){
+	if investorRecord == nil {
 		log.Println("Investor record not found")
 		investorRecord = service.createNewInvestor(transData)
 	}
 	//record to transaction
-	transactionRecord := service.createNewTransaction(transData)
-	
-	//check if debit or credit
-	if(transData.PaymentType == DEBIT){
-		investorRecord.Set("investmentBalance", investorRecord.getFloat("investmentBalance") - transData.Amount)
+	service.createNewTransaction(transData)
 
-	} else if(transData.PaymentType == CREDIT){
-		investorRecord.Set("investmentBalance", investorRecord.getFloat("investmentBalance") + transData.Amount)
+	//check if debit or credit
+	if transData.PaymentType == DEBIT {
+		investorRecord.Set("investmentBalance", investorRecord.GetFloat("investmentBalance")-transData.Amount)
+
+	} else if transData.PaymentType == CREDIT {
+		investorRecord.Set("investmentBalance", investorRecord.GetFloat("investmentBalance")+transData.Amount)
 	}
 
 	return "Success", nil
 
-    
 }
 
-
-func (service *processorApp) createNewInvestor(transData TransData) (*models.Record) {
+func (service *processorApp) createNewInvestor(transData TransData) *models.Record {
 	//get collection
 	investorCollection, err := service.app.Dao().FindCollectionByNameOrId(investorCollectionNameOrId)
 	if err != nil {
@@ -313,7 +315,7 @@ func (service *processorApp) createNewInvestor(transData TransData) (*models.Rec
 	investorRecord := models.NewRecord(investorCollection)
 	investorRecord.Set("investorName", transData.InvestorName)
 	investorRecord.Set("status", "ACTIVE")
-	if(transData.PaymentType == CREDIT){
+	if transData.PaymentType == CREDIT {
 		investorRecord.Set("investmentBalance", transData.Amount)
 	}
 	investorRecord.Set("loanedAmount", 0)
@@ -325,9 +327,9 @@ func (service *processorApp) createNewInvestor(transData TransData) (*models.Rec
 
 }
 
-func (service *processorApp) createNewTransaction(transData TransData) (*models.Record) {
+func (service *processorApp) createNewTransaction(transData TransData) *models.Record {
 	//save transaction
-	transactionCollection, err := service.app.Dao().FindCollectionByNameOrId(transactionCollectionNameOrId)
+	transactionCollection, err := service.app.Dao().FindCollectionByNameOrId(transactionsCollectionNameOrId)
 	if err != nil {
 		log.Println(err)
 		return nil
