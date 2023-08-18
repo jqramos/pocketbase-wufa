@@ -1,572 +1,576 @@
 [
-  {
-      "id": "hg0ioqx0drbdlrh",
-      "name": "transactions",
-      "type": "base",
-      "system": false,
-      "schema": [
-          {
-              "id": "6dlsr9vr",
-              "name": "transactionDate",
-              "type": "date",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": "",
-                  "max": ""
-              }
-          },
-          {
-              "id": "7cx0oajo",
-              "name": "description",
-              "type": "text",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null,
-                  "pattern": ""
-              }
-          },
-          {
-              "id": "ytfxsnn8",
-              "name": "amount",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "q0uaukmv",
-              "name": "cashBalance",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "ul7wczpk",
-              "name": "type",
-              "type": "select",
-              "system": false,
-              "required": false,
-              "options": {
-                  "maxSelect": 1,
-                  "values": [
-                      "DEBIT",
-                      "CREDIT",
-                      "PENDING"
-                  ]
-              }
-          },
-          {
-              "id": "v5ej6p7s",
-              "name": "investor",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "znnnrgp929y15v5",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": []
-              }
-          },
-          {
-              "id": "avenaa7e",
-              "name": "isDeleted",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "5begf02a",
-              "name": "targetDate",
-              "type": "date",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": "",
-                  "max": ""
-              }
-          },
-          {
-              "id": "armolwiv",
-              "name": "loan",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "338rywvbw9lbtom",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": []
-              }
-          },
-          {
-              "id": "4sn9ptnk",
-              "name": "loanBalance",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "ur2ewb5q",
-              "name": "customerName",
-              "type": "text",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null,
-                  "pattern": ""
-              }
-          }
-      ],
-      "indexes": [],
-      "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
-      "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
-      "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "options": {}
-  },
-  {
-      "id": "338rywvbw9lbtom",
-      "name": "loans",
-      "type": "base",
-      "system": false,
-      "schema": [
-          {
-              "id": "ecrkbidy",
-              "name": "amount",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "41m1f4ex",
-              "name": "remainingBalance",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "y0hxqhqm",
-              "name": "paidAmount",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "iwkhlatx",
-              "name": "customerId",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "prmfuwetbfw3u9y",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": [
-                      "id"
-                  ]
-              }
-          },
-          {
-              "id": "uyftk03n",
-              "name": "status",
-              "type": "select",
-              "system": false,
-              "required": false,
-              "options": {
-                  "maxSelect": 1,
-                  "values": [
-                      "Ongoing",
-                      "Unpaid",
-                      "Completed"
-                  ]
-              }
-          },
-          {
-              "id": "truaemvt",
-              "name": "startDate",
-              "type": "date",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": "",
-                  "max": ""
-              }
-          },
-          {
-              "id": "mg39ju2u",
-              "name": "endDate",
-              "type": "date",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": "",
-                  "max": ""
-              }
-          },
-          {
-              "id": "jabqgraa",
-              "name": "isDeleted",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "zv29npno",
-              "name": "payday",
-              "type": "select",
-              "system": false,
-              "required": false,
-              "options": {
-                  "maxSelect": 1,
-                  "values": [
-                      "Sunday",
-                      "Monday",
-                      "Tuesday",
-                      "Wednesday",
-                      "Thursday",
-                      "Friday",
-                      "Saturday"
-                  ]
-              }
-          },
-          {
-              "id": "t6vxchyk",
-              "name": "investor",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "znnnrgp929y15v5",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": [
-                      "id"
-                  ]
-              }
-          }
-      ],
-      "indexes": [],
-      "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
-      "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
-      "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "options": {}
-  },
-  {
-      "id": "prmfuwetbfw3u9y",
-      "name": "customers",
-      "type": "base",
-      "system": false,
-      "schema": [
-          {
-              "id": "ep8flwou",
-              "name": "customerName",
-              "type": "text",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": 0,
-                  "max": 15,
-                  "pattern": ""
-              }
-          },
-          {
-              "id": "nrn4u8km",
-              "name": "renewalCount",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "xkvgqwek",
-              "name": "lastTransactionDate",
-              "type": "date",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": "",
-                  "max": ""
-              }
-          },
-          {
-              "id": "wyze89xp",
-              "name": "status",
-              "type": "select",
-              "system": false,
-              "required": false,
-              "options": {
-                  "maxSelect": 1,
-                  "values": [
-                      "Active",
-                      "Banned",
-                      "Unpaid",
-                      "Inactive",
-                      "New"
-                  ]
-              }
-          },
-          {
-              "id": "gbiure03",
-              "name": "referredBy",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "prmfuwetbfw3u9y",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": [
-                      "customerName",
-                      "id"
-                  ]
-              }
-          },
-          {
-              "id": "dxqgr8wp",
-              "name": "isDeleted",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          }
-      ],
-      "indexes": [],
-      "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "options": {}
-  },
-  {
-      "id": "znnnrgp929y15v5",
-      "name": "investors",
-      "type": "base",
-      "system": false,
-      "schema": [
-          {
-              "id": "vjcttryc",
-              "name": "investorName",
-              "type": "text",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null,
-                  "pattern": ""
-              }
-          },
-          {
-              "id": "5v5co0sq",
-              "name": "investmentPoolAmount",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "sewhw8ni",
-              "name": "description",
-              "type": "text",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null,
-                  "pattern": ""
-              }
-          },
-          {
-              "id": "uhxu0szi",
-              "name": "investmentBalance",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "nnztznce",
-              "name": "loanedAmount",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "qtoixeux",
-              "name": "isDeleted",
-              "type": "number",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null
-              }
-          },
-          {
-              "id": "nbeyyx0a",
-              "name": "user",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "_pb_users_auth_",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": []
-              }
-          }
-      ],
-      "indexes": [],
-      "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && id = @request.auth.investor.id)) ",
-      "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && id = @request.auth.investor.id)) ",
-      "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
-      "options": {}
-  },
-  {
-      "id": "_pb_users_auth_",
-      "name": "users",
-      "type": "auth",
-      "system": false,
-      "schema": [
-          {
-              "id": "users_name",
-              "name": "name",
-              "type": "text",
-              "system": false,
-              "required": false,
-              "options": {
-                  "min": null,
-                  "max": null,
-                  "pattern": ""
-              }
-          },
-          {
-              "id": "users_avatar",
-              "name": "avatar",
-              "type": "file",
-              "system": false,
-              "required": false,
-              "options": {
-                  "maxSelect": 1,
-                  "maxSize": 5242880,
-                  "mimeTypes": [
-                      "image/jpeg",
-                      "image/png",
-                      "image/svg+xml",
-                      "image/gif",
-                      "image/webp"
-                  ],
-                  "thumbs": null,
-                  "protected": false
-              }
-          },
-          {
-              "id": "nd1kbofg",
-              "name": "role",
-              "type": "select",
-              "system": false,
-              "required": false,
-              "options": {
-                  "maxSelect": 1,
-                  "values": [
-                      "admin",
-                      "basic"
-                  ]
-              }
-          },
-          {
-              "id": "2b2ha92s",
-              "name": "investor",
-              "type": "relation",
-              "system": false,
-              "required": false,
-              "options": {
-                  "collectionId": "znnnrgp929y15v5",
-                  "cascadeDelete": false,
-                  "minSelect": null,
-                  "maxSelect": 1,
-                  "displayFields": []
-              }
-          }
-      ],
-      "indexes": [],
-      "listRule": "@request.auth.id != \"\" && @request.auth.role = 'admin'",
-      "viewRule": "@request.auth.id != \"\" && @request.auth.role = 'admin'",
-      "createRule": "",
-      "updateRule": "@request.auth.id != \"\" && @request.auth.role = 'admin'",
-      "deleteRule": "id = @request.auth.id",
-      "options": {
-          "allowEmailAuth": true,
-          "allowOAuth2Auth": false,
-          "allowUsernameAuth": true,
-          "exceptEmailDomains": null,
-          "manageRule": null,
-          "minPasswordLength": 8,
-          "onlyEmailDomains": null,
-          "requireEmail": false
-      }
-  }
+    {
+        "id": "hg0ioqx0drbdlrh",
+        "name": "transactions",
+        "type": "base",
+        "system": false,
+        "schema": [
+            {
+                "id": "6dlsr9vr",
+                "name": "transactionDate",
+                "type": "date",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": "",
+                    "max": ""
+                }
+            },
+            {
+                "id": "7cx0oajo",
+                "name": "description",
+                "type": "text",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            },
+            {
+                "id": "ytfxsnn8",
+                "name": "amount",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "q0uaukmv",
+                "name": "cashBalance",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "ul7wczpk",
+                "name": "type",
+                "type": "select",
+                "system": false,
+                "required": false,
+                "options": {
+                    "maxSelect": 1,
+                    "values": [
+                        "DEBIT",
+                        "CREDIT",
+                        "PENDING"
+                    ]
+                }
+            },
+            {
+                "id": "v5ej6p7s",
+                "name": "investor",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "znnnrgp929y15v5",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": []
+                }
+            },
+            {
+                "id": "avenaa7e",
+                "name": "isDeleted",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "5begf02a",
+                "name": "targetDate",
+                "type": "date",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": "",
+                    "max": ""
+                }
+            },
+            {
+                "id": "armolwiv",
+                "name": "loan",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "338rywvbw9lbtom",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": []
+                }
+            },
+            {
+                "id": "4sn9ptnk",
+                "name": "loanBalance",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "ur2ewb5q",
+                "name": "customerName",
+                "type": "text",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            }
+        ],
+        "indexes": [],
+        "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
+        "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
+        "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "options": {}
+    },
+    {
+        "id": "338rywvbw9lbtom",
+        "name": "loans",
+        "type": "base",
+        "system": false,
+        "schema": [
+            {
+                "id": "ecrkbidy",
+                "name": "amount",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "41m1f4ex",
+                "name": "remainingBalance",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "y0hxqhqm",
+                "name": "paidAmount",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "iwkhlatx",
+                "name": "customerId",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "prmfuwetbfw3u9y",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": [
+                        "id"
+                    ]
+                }
+            },
+            {
+                "id": "uyftk03n",
+                "name": "status",
+                "type": "select",
+                "system": false,
+                "required": false,
+                "options": {
+                    "maxSelect": 1,
+                    "values": [
+                        "Ongoing",
+                        "Unpaid",
+                        "Completed"
+                    ]
+                }
+            },
+            {
+                "id": "truaemvt",
+                "name": "startDate",
+                "type": "date",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": "",
+                    "max": ""
+                }
+            },
+            {
+                "id": "mg39ju2u",
+                "name": "endDate",
+                "type": "date",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": "",
+                    "max": ""
+                }
+            },
+            {
+                "id": "jabqgraa",
+                "name": "isDeleted",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "zv29npno",
+                "name": "payday",
+                "type": "select",
+                "system": false,
+                "required": false,
+                "options": {
+                    "maxSelect": 1,
+                    "values": [
+                        "Sunday",
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday"
+                    ]
+                }
+            },
+            {
+                "id": "t6vxchyk",
+                "name": "investor",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "znnnrgp929y15v5",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": [
+                        "id"
+                    ]
+                }
+            }
+        ],
+        "indexes": [],
+        "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
+        "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && investor.id = @request.auth.investor.id)) ",
+        "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "options": {}
+    },
+    {
+        "id": "_pb_users_auth_",
+        "name": "users",
+        "type": "auth",
+        "system": false,
+        "schema": [
+            {
+                "id": "users_name",
+                "name": "name",
+                "type": "text",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            },
+            {
+                "id": "users_avatar",
+                "name": "avatar",
+                "type": "file",
+                "system": false,
+                "required": false,
+                "options": {
+                    "maxSelect": 1,
+                    "maxSize": 5242880,
+                    "mimeTypes": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/svg+xml",
+                        "image/gif",
+                        "image/webp"
+                    ],
+                    "thumbs": null,
+                    "protected": false
+                }
+            },
+            {
+                "id": "nd1kbofg",
+                "name": "role",
+                "type": "select",
+                "system": false,
+                "required": false,
+                "options": {
+                    "maxSelect": 1,
+                    "values": [
+                        "admin",
+                        "basic"
+                    ]
+                }
+            },
+            {
+                "id": "2b2ha92s",
+                "name": "investor",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "znnnrgp929y15v5",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": []
+                }
+            }
+        ],
+        "indexes": [],
+        "listRule": "@request.auth.id != \"\" && @request.auth.role = 'admin'",
+        "viewRule": "@request.auth.id != \"\" && @request.auth.role = 'admin'",
+        "createRule": "",
+        "updateRule": "@request.auth.id != \"\" && @request.auth.role = 'admin'",
+        "deleteRule": "id = @request.auth.id",
+        "options": {
+            "allowEmailAuth": true,
+            "allowOAuth2Auth": false,
+            "allowUsernameAuth": true,
+            "exceptEmailDomains": null,
+            "manageRule": null,
+            "minPasswordLength": 8,
+            "onlyEmailDomains": null,
+            "requireEmail": false
+        }
+    },
+    {
+        "id": "prmfuwetbfw3u9y",
+        "name": "customers",
+        "type": "base",
+        "system": false,
+        "schema": [
+            {
+                "id": "ep8flwou",
+                "name": "customerName",
+                "type": "text",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": 0,
+                    "max": 15,
+                    "pattern": ""
+                }
+            },
+            {
+                "id": "nrn4u8km",
+                "name": "renewalCount",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "xkvgqwek",
+                "name": "lastTransactionDate",
+                "type": "date",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": "",
+                    "max": ""
+                }
+            },
+            {
+                "id": "wyze89xp",
+                "name": "status",
+                "type": "select",
+                "system": false,
+                "required": false,
+                "options": {
+                    "maxSelect": 1,
+                    "values": [
+                        "Active",
+                        "Banned",
+                        "Unpaid",
+                        "Inactive",
+                        "New"
+                    ]
+                }
+            },
+            {
+                "id": "gbiure03",
+                "name": "referredBy",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "prmfuwetbfw3u9y",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": [
+                        "customerName",
+                        "id"
+                    ]
+                }
+            },
+            {
+                "id": "dxqgr8wp",
+                "name": "isDeleted",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            }
+        ],
+        "indexes": [
+            "CREATE UNIQUE INDEX `idx_UE0nkUz` ON `customers` (`customerName`)"
+        ],
+        "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "options": {}
+    },
+    {
+        "id": "znnnrgp929y15v5",
+        "name": "investors",
+        "type": "base",
+        "system": false,
+        "schema": [
+            {
+                "id": "vjcttryc",
+                "name": "investorName",
+                "type": "text",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            },
+            {
+                "id": "5v5co0sq",
+                "name": "investmentPoolAmount",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "sewhw8ni",
+                "name": "description",
+                "type": "text",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            },
+            {
+                "id": "uhxu0szi",
+                "name": "investmentBalance",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "nnztznce",
+                "name": "loanedAmount",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "qtoixeux",
+                "name": "isDeleted",
+                "type": "number",
+                "system": false,
+                "required": false,
+                "options": {
+                    "min": null,
+                    "max": null
+                }
+            },
+            {
+                "id": "nbeyyx0a",
+                "name": "user",
+                "type": "relation",
+                "system": false,
+                "required": false,
+                "options": {
+                    "collectionId": "_pb_users_auth_",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": []
+                }
+            }
+        ],
+        "indexes": [
+            "CREATE UNIQUE INDEX `idx_guGCCWu` ON `investors` (`investorName`)"
+        ],
+        "listRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && id = @request.auth.investor.id)) ",
+        "viewRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin' || (@request.auth.role = 'basic' && id = @request.auth.investor.id)) ",
+        "createRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "updateRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "deleteRule": "@request.auth.id != \"\" && (@request.auth.role = 'admin') ",
+        "options": {}
+    }
 ]

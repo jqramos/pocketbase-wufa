@@ -25,7 +25,10 @@ func main() {
 		log.Println(e.Model.TableName())
 		log.Println(e.Model.GetId())
 		//call loan service
-		loan_service.TriggerOnCreateLoanSchedule(e.Model.GetId(), app)
+		err := loan_service.TriggerOnCreateLoanSchedule(e.Model.GetId(), app)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 

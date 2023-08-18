@@ -51,8 +51,6 @@ func (api *paymentRecordApi) cErr(c echo.Context) error {
 	return apis.NewNotFoundError("Error message 1", "Custom: Missing Id")
 }
 
-
-
 func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 	data := apis.RequestInfo(c).Data
 
@@ -79,7 +77,7 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 	}
 
 	//get transaction record
-	transactionRecord, err := api.app.Dao().FindRecordById(transactionsCollectionNameOrId, transactionId , nil)
+	transactionRecord, err := api.app.Dao().FindRecordById(transactionsCollectionNameOrId, transactionId, nil)
 	if err != nil {
 		log.Fatalf("failed to expand: %v", err)
 		return apis.NewNotFoundError("Error message 3", "Custom: Transaction record not found")
@@ -152,7 +150,7 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 
 }
 
-func (api *paymentRecordApi) batchFileProcess(c echo.Context) error{
+func (api *paymentRecordApi) batchFileProcess(c echo.Context) error {
 
 	//get file from request
 	file, err := c.FormFile("file")
@@ -160,16 +158,15 @@ func (api *paymentRecordApi) batchFileProcess(c echo.Context) error{
 		log.Fatalf("failed to expand: %v", err)
 		return apis.NewNotFoundError("Error message 1", "Custom: Missing file")
 	}
-	//check if file is xlsx 
+	//check if file is xlsx
 	if file.Header.Get("Content-Type") != "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" {
 		log.Fatalf("failed to expand: %v", err)
 		return apis.NewNotFoundError("Error message 2", "Custom: Invalid file type")
 	}
 
-	result, err := loan_service.LoadExcelFileToData(file, app)
+	result, err := loan_service.LoadExcelFileToData(file, api.app)
 
 	//return result
 	return c.JSON(200, map[string]any{"message": "Success", "result": result})
-	
 
 }
