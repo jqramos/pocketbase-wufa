@@ -213,7 +213,7 @@ func (service *processorApp) runDataLoadProcess(transData TransData) (string, er
 		} else {
 			return service.processNewLoan(customerRecord, transData)
 		}
-	} else if transData.TransType == DEPOSIT {
+	} else if transData.TransType == DEPOSIT || transData.TransType == WITHDRAW {
 		result, err := service.processInvestorTransaction(transData)
 		if err != nil {
 			log.Println(err)
