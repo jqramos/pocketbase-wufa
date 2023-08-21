@@ -76,7 +76,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 
 func createPayments(loan *models.Record, investorId string, app core.App, customerName string) {
 	startDate := loan.GetDateTime("startDate")
-	amount := loan.GetFloat("amount")
+	amount := loan.GetFloat("amount") * 1.2
 	var dates = getDates(startDate)
 
 	transactionsCollection, err := app.Dao().FindCollectionByNameOrId(transactionsCollectionNameOrId)

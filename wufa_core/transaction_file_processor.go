@@ -7,7 +7,6 @@ import (
 	"log"
 	"mime/multipart"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -63,7 +62,6 @@ var secondsToAdd int = 0
 
 // load excel file to data accepts file
 func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, error) {
-	var wg sync.WaitGroup
 	log.Println(file.Filename)
 	//set app to processorApp
 	service := processorApp{app: app}
@@ -96,7 +94,6 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 
 	for idx, row := range rows {
 		if idx != 0 {
-			wg.Add(1)
 			transData := new(TransData)
 
 			if isStringEmpty(row[TransactionDate]) {
@@ -158,15 +155,11 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 				log.Println("TransactionType is empty")
 			}
 			transData.TransType = row[TransactionType]
-			//run data load process wait to finish use sync wait group
-			go func() {
-				_, err := service.runDataLoadProcess(*transData)
-				if err != nil {
-					log.Println(err)
-				}
-				defer wg.Done()
-			}()
-			wg.Wait()
+
+			_, err := service.runDataLoadProcess(*transData)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 
 		log.Println("next row")
