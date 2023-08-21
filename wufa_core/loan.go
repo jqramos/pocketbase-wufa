@@ -26,7 +26,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 	//get investor record
 	investorRecord := loan.ExpandedOne("investor")
 	customer := loan.ExpandedOne("customerId")
-	
+
 	createPayments(loan, investorRecord.GetString("id"), app, customer.GetString("customerName"))
 	investorRecord, fetchErr := app.Dao().FindRecordById(investorCollectionNameOrId, investorRecord.GetString("id"), nil)
 
@@ -65,7 +65,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 	transactionRecord.Set("amount", loanAmount)
 	transactionRecord.Set("cashBalance", investorBalance)
 	transactionRecord.Set("description", "Loan to customer "+loan.GetString("customerName"))
-	transactionRecord.Set("transactionDate", types.NowDateTime())
+	transactionRecord.Set("transactionDate", loan.GetDateTime("startDate"))
 
 	if err := app.Dao().SaveRecord(transactionRecord); err != nil {
 		return err

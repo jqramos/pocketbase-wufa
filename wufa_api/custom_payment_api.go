@@ -9,24 +9,21 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// declare constants here
 const loanCollectionNameOrId = "loans"
 const investorCollectionNameOrId = "investors"
 const transactionsCollectionNameOrId = "transactions"
 
 const (
-	TransactionStatusPending string = "PENDING"
-	//Debit
-	TrasactionStatusDebit = "DEBIT"
-	//Credit
-	TransactionStatusCredit = "CREDIT"
+	PENDING string = "PENDING"
+	DEBIT   string = "DEBIT"
+	CREDIT  string = "CREDIT"
 )
 
 const (
-	LoanStatusOngoing string = "Ongoing"
-	//Unpaid
-	LoanStatusUnpaid = "Unpaid"
-	//Completed
-	LoanStatusCompleted = "Completed"
+	ONGOING   string = "Ongoing"
+	UNPAID    string = "Unpaid"
+	COMPLETED string = "Completed"
 )
 
 // For loan transaction like payment and disbursement
@@ -79,15 +76,15 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 	//get transaction record
 	transactionRecord, err := api.app.Dao().FindRecordById(transactionsCollectionNameOrId, transactionId, nil)
 	if err != nil {
-		log.Fatalf("failed to expand: %v", err)
+		log.Println("failed to expand: %v", err)
 		return apis.NewNotFoundError("Error message 3", "Custom: Transaction record not found")
 	}
-
+	log.Println(ONGOING)
 	//get loan status
 	loanStatus := loanRecord.GetString("status")
 	//proceed only if status is ongoing
-	if loanStatus != LoanStatusOngoing {
-		log.Fatalf("failed to expand: %v", err)
+	if loanStatus != ONGOING {
+		log.Println("Loan status is not ongoing")
 		return apis.NewNotFoundError("Error message 4", "Custom: Loan status is not ongoing")
 	}
 
@@ -107,7 +104,7 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 
 	//if remainingBalance is 0, update loan status to completed
 	if remainingBalance == 0 {
-		loanRecord.Set("status", LoanStatusCompleted)
+		loanRecord.Set("status", COMPLETED)
 	}
 
 	//save loan record
@@ -117,14 +114,8 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 	}
 
 	//update transaction record status to credit
-	transactionRecord.Set("type", TransactionStatusCredit)
+	transactionRecord.Set("type", CREDIT)
 	transactionRecord.Set("transactionDate", transactionDate)
-
-	//save transaction record
-	if err := api.app.Dao().SaveRecord(transactionRecord); err != nil {
-		log.Fatalf("failed to expand: %v", err)
-		return apis.NewNotFoundError("Error message 5", "Custom: Failed to save transaction record")
-	}
 
 	//get investor record from loanRecord
 	investorRecord := loanRecord.ExpandedOne("investor")
@@ -138,6 +129,13 @@ func (api *paymentRecordApi) markAsPaid(c echo.Context) error {
 	var newLoanedAmount = loanedAmount - transactionAmount
 	investorRecord.Set("investmentBalance", investorBalance)
 	investorRecord.Set("loanedAmount", newLoanedAmount)
+	investorRecord.Set("investmentPoolAmount", investorRecord.GetFloat("investmentPoolAmount")+transactionAmount)
+	transactionRecord.Set("cashBalance", investorBalance)
+	//save transaction record
+	if err := api.app.Dao().SaveRecord(transactionRecord); err != nil {
+		log.Fatalf("failed to expand: %v", err)
+		return apis.NewNotFoundError("Error message 5", "Custom: Failed to save transaction record")
+	}
 
 	//save investor record
 	if err := api.app.Dao().SaveRecord(investorRecord); err != nil {
