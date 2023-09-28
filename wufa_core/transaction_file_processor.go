@@ -434,6 +434,7 @@ func (service *processorApp) updateLoanTransaction(transData TransData, loanId s
 		var cashBalance = transData.CashBalance - transData.Amount
 		//update all transaction records
 		for _, transactionRecord := range transactionRecords {
+			cashBalance = cashBalance + transactionRecord.GetFloat("amount")
 			var dateTransacted, _ = service.parseDate(transData.TransactionDate, true)
 			transactionRecord.Set("status", "PAID")
 			transactionRecord.Set("transactionDate", dateTransacted)
@@ -441,7 +442,7 @@ func (service *processorApp) updateLoanTransaction(transData TransData, loanId s
 			transactionRecord.Set("type", transData.PaymentType)
 			transactionRecord.Set("investorName", transData.InvestorName)
 			transactionRecord.Set("customerName", transData.CustomerName)
-			transactionRecord.Set("cashBalance", cashBalance+transactionRecord.GetFloat("amount"))
+			transactionRecord.Set("cashBalance", cashBalance)
 			transactionRecord.Set("description", "Advance Payment by "+transData.CustomerName)
 			//save
 			if err := service.app.Dao().SaveRecord(transactionRecord); err != nil {
