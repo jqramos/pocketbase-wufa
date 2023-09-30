@@ -1,7 +1,6 @@
 package loan_service
 
 import (
-	"errors"
 	"fmt"
 	"github.com/pocketbase/pocketbase/tools/types"
 	"log"
@@ -16,15 +15,13 @@ import (
 
 // enum for cell column
 const (
-	TransactionDate  int = 0
-	Amount               = 1
-	LoanedAmount         = 2
-	PaymentType          = 3
-	InvestorName         = 4
-	CustomerName         = 5
-	IsAdvancePayment     = 6
-	StartDate            = 7
-	TransactionType      = 8
+	TransactionDate int = 0
+	Amount              = 1
+	PaymentType         = 2
+	InvestorName        = 3
+	CustomerName        = 4
+	StartDate           = 5
+	TransactionType     = 6
 )
 
 const (
@@ -41,7 +38,6 @@ const (
 type TransData struct {
 	TransactionDate  string
 	Amount           float64
-	LoanedAmount     float64
 	PaymentType      string
 	InvestorName     string
 	CustomerName     string
@@ -50,6 +46,7 @@ type TransData struct {
 	TransType        string
 	CashBalance      float64
 	Description      string
+	LoanId           string
 }
 
 const customerCollectionNameOrId = "customers"
@@ -79,24 +76,16 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 		return "", err
 	}
 
-	defer func() {
-		// Close the spreadsheet.
-		if err := f.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
-
 	// Get all the rows in the Sheet1.
 	rows, err := f.GetRows("Sheet1")
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-
 	for idx, row := range rows {
 		if idx != 0 {
 			transData := new(TransData)
-
+			log.Println("Starting row number: ", idx)
 			if isStringEmpty(row[TransactionDate]) {
 				log.Println("TransactionDate is empty")
 			}
@@ -113,18 +102,6 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 				}
 			}
 			log.Println("Amount", row[Amount])
-
-			if isStringEmpty(row[LoanedAmount]) {
-				log.Println("LoanedAmount is empty")
-			} else {
-				transData.LoanedAmount, err = strconv.ParseFloat(row[LoanedAmount], 64)
-				if err != nil {
-					log.Println(err)
-					return "", err
-				}
-			}
-
-			log.Println("LoanedAmount", row[LoanedAmount])
 
 			if isStringEmpty(row[PaymentType]) {
 				log.Println("PaymentType is empty")
@@ -143,10 +120,6 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 			}
 			transData.CustomerName = row[CustomerName]
 
-			if isStringEmpty(row[IsAdvancePayment]) {
-				log.Println("IsAdvancePayment is empty")
-			}
-
 			if isStringEmpty(row[StartDate]) {
 				log.Println("StartDate is empty")
 			}
@@ -162,6 +135,7 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 			if err != nil {
 				log.Println(err)
 			}
+
 		}
 		log.Println("next row")
 	}
@@ -196,8 +170,7 @@ func (service *processorApp) runDataLoadProcess(transData TransData) (string, er
 		if !isNewCustomer {
 			var filter = fmt.Sprintf("customerId = '%s' && status = 'Ongoing'", customerRecord.GetId())
 			//get loans
-			loans, err := service.app.Dao().FindRecordsByFilter(loanCollectionNameOrId,
-				filter, "", 100)
+			loans, err := service.app.Dao().FindRecordsByFilter(loanCollectionNameOrId, filter, "", 100, 0, nil)
 			if err != nil {
 				log.Println(err)
 				return "Error: Failed to get loans", nil
@@ -206,13 +179,20 @@ func (service *processorApp) runDataLoadProcess(transData TransData) (string, er
 			//check result
 			if len(loans) == 0 && transData.TransType == LOAN {
 				log.Println("No loans found")
-				//process new loan
+				//increment renewalCount by 1
+				customerRecord.Set("renewalCount", customerRecord.GetInt("renewalCount")+1)
+				//save customer record
+				err = service.app.Dao().SaveRecord(customerRecord)
+				if err != nil {
+					log.Println(err)
+					return "Error: Failed to save customer record", nil
+				}
 				return service.processNewLoan(customerRecord, transData)
 			} else {
 				log.Println("Loan found")
 				isLastPayment := false
 				var balance = loans[0].GetFloat("remainingBalance") - transData.Amount
-				if balance == 0 {
+				if balance <= 0 {
 					isLastPayment = true
 				}
 				return service.processExistingLoan(customerRecord, loans[0], transData, isLastPayment)
@@ -295,24 +275,31 @@ func (service *processorApp) processNewLoan(customerRecord *models.Record, trans
 		return "", err
 	}
 
-	var interestRate, _ = strconv.ParseFloat("1.2", 64)
+	var interestRate = 1.2
 
 	//create loan record
 	loanRecord := models.NewRecord(loanCollection)
 	loanRecord.Set("customerId", customerRecord.GetId())
-	loanRecord.Set("loanAmount", transData.LoanedAmount)
-	loanRecord.Set("amount", transData.LoanedAmount)
+	loanRecord.Set("loanAmount", transData.Amount)
+	loanRecord.Set("amount", transData.Amount)
 	loanRecord.Set("status", "Ongoing")
 	loanRecord.Set("investor", investorRecord.GetId())
 	var startDate, _ = service.parseDate(transData.StartDate, false)
 	log.Println("Start date: ", startDate)
 	loanRecord.Set("startDate", startDate)
 	loanRecord.Set("renewalCount", 0)
-	loanRecord.Set("remainingBalance", transData.LoanedAmount*interestRate)
+	loanRecord.Set("remainingBalance", transData.Amount*interestRate)
 	loanRecord.Set("paidAmount", 0)
 
 	//save
 	if err := service.app.Dao().SaveRecord(loanRecord); err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	investorRecord.Set("loanedAmount", investorRecord.GetFloat("loanedAmount")+transData.Amount)
+	investorRecord.Set("investmentBalance", investorRecord.GetFloat("investmentBalance")-transData.Amount)
+	if err := service.app.Dao().SaveRecord(investorRecord); err != nil {
 		log.Println(err)
 		return "", err
 	}
@@ -376,15 +363,15 @@ func (service *processorApp) processInvestorTransaction(transData TransData) (st
 			transData.Description = investorRecord.GetString("investorName") + " deposited " + strconv.FormatFloat(transData.Amount, 'f', 2, 64)
 		}
 	}
-
-	//record to transaction
-	_, err = service.createNewTransaction(transData, investorRecord.GetId())
+	//save investor record
+	err = service.app.Dao().SaveRecord(investorRecord)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-	//save investor record
-	err = service.app.Dao().SaveRecord(investorRecord)
+
+	//record to transaction
+	_, err = service.createNewTransaction(transData, investorRecord.GetId())
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -419,14 +406,46 @@ func (service *processorApp) updateLoanTransaction(transData TransData, loanId s
 	var filter = fmt.Sprintf("loan = '%s' && type = '%s'", loanId, PENDING)
 	log.Println("Filter: ", filter)
 	//find transaction record with earliest target date
-	transactionRecords, err := service.app.Dao().FindRecordsByFilter(transactionsCollectionNameOrId, filter, "+targetDate", 10)
+	transactionRecords, err := service.app.Dao().FindRecordsByFilter(transactionsCollectionNameOrId, filter, "+targetDate", 20, 0)
 	if err != nil {
 		log.Fatalf("Error finding transaction record: %s", err.Error())
 		return nil, err
 	}
+
+	transactionCollection, err := service.app.Dao().FindCollectionByNameOrId(transactionsCollectionNameOrId)
+	if err != nil {
+		log.Fatalf("Error finding transaction collection: %s", err.Error())
+		return nil, err
+	}
+
 	if len(transactionRecords) == 0 {
-		log.Println("Error saving transaction record, transaction record size" + string(len(transactionRecords)))
-		return nil, errors.New("Error saving transaction record")
+		existingRecords, err := service.app.Dao().FindRecordsByFilter(transactionsCollectionNameOrId, fmt.Sprintf("loan = '%s'", loanId), "+transactionDate", 20, 0)
+		if err != nil {
+			log.Fatalf("Error finding transaction record: %s", err.Error())
+			return nil, err
+		}
+
+		var weekNumber = len(existingRecords)
+		var dateTransacted, _ = service.parseDate(transData.TransactionDate, true)
+		newTransactionRecord := models.NewRecord(transactionCollection)
+		newTransactionRecord.Set("customerName", transData.CustomerName)
+		newTransactionRecord.Set("amount", transData.Amount)
+		newTransactionRecord.Set("targetDate", dateTransacted)
+		newTransactionRecord.Set("transactionDate", dateTransacted)
+		newTransactionRecord.Set("status", "PAID")
+		newTransactionRecord.Set("loan", loanId)
+		newTransactionRecord.Set("investor", existingRecords[0].GetString("investor"))
+		newTransactionRecord.Set("description", "Payment for week "+strconv.Itoa(weekNumber+1))
+		newTransactionRecord.Set("cashBalance", transData.CashBalance)
+		newTransactionRecord.Set("type", transData.PaymentType)
+
+		saveErr := service.app.Dao().SaveRecord(newTransactionRecord)
+		if saveErr != nil {
+			log.Fatal(saveErr)
+		}
+
+		return newTransactionRecord, nil
+
 	}
 	transData.IsAdvancePayment = len(transactionRecords) > 0 && isLastPayment
 
@@ -438,16 +457,34 @@ func (service *processorApp) updateLoanTransaction(transData TransData, loanId s
 			var dateTransacted, _ = service.parseDate(transData.TransactionDate, true)
 			transactionRecord.Set("status", "PAID")
 			transactionRecord.Set("transactionDate", dateTransacted)
-			transactionRecord.Set("loanedAmount", transData.LoanedAmount)
 			transactionRecord.Set("type", transData.PaymentType)
 			transactionRecord.Set("investorName", transData.InvestorName)
 			transactionRecord.Set("customerName", transData.CustomerName)
 			transactionRecord.Set("cashBalance", cashBalance)
-			transactionRecord.Set("description", "Advance Payment by "+transData.CustomerName)
+			transactionRecord.Set("description", "Advance Payment")
 			//save
 			if err := service.app.Dao().SaveRecord(transactionRecord); err != nil {
 				log.Println(err)
 				return nil, err
+			}
+		}
+
+		if transData.CashBalance > cashBalance {
+			var dateTransacted, _ = service.parseDate(transData.TransactionDate, true)
+			newTransactionRecord := models.NewRecord(transactionCollection)
+			newTransactionRecord.Set("customerName", transData.CustomerName)
+			newTransactionRecord.Set("amount", transData.CashBalance-cashBalance)
+			newTransactionRecord.Set("targetDate", dateTransacted)
+			newTransactionRecord.Set("transactionDate", dateTransacted)
+			newTransactionRecord.Set("status", "PAID")
+			newTransactionRecord.Set("loan", loanId)
+			newTransactionRecord.Set("investor", transactionRecords[0].GetString("investor"))
+			newTransactionRecord.Set("description", "Advance Payment")
+			newTransactionRecord.Set("type", transData.PaymentType)
+
+			saveErr := service.app.Dao().SaveRecord(newTransactionRecord)
+			if saveErr != nil {
+				log.Fatal(saveErr)
 			}
 		}
 		return transactionRecords[0], nil
@@ -456,12 +493,15 @@ func (service *processorApp) updateLoanTransaction(transData TransData, loanId s
 		var transactionRecord = transactionRecords[0]
 		var targetDate, _ = service.parseDate(transData.TransactionDate, true)
 		transactionRecord.Set("transactionDate", targetDate)
-		transactionRecord.Set("loanedAmount", transData.LoanedAmount)
 		transactionRecord.Set("type", transData.PaymentType)
 		transactionRecord.Set("investorName", transData.InvestorName)
 		transactionRecord.Set("customerName", transData.CustomerName)
 		transactionRecord.Set("cashBalance", transData.CashBalance)
 		transactionRecord.Set("status", "PAID")
+		//if amount is not equal to transaction amount, then it is a partial payment
+		if transData.Amount != transactionRecord.GetFloat("amount") {
+			transactionRecord.Set("amount", transData.Amount)
+		}
 		//save
 		if err := service.app.Dao().SaveRecord(transactionRecord); err != nil {
 			log.Println(err)
@@ -483,7 +523,6 @@ func (service *processorApp) createNewTransaction(transData TransData, investorI
 	var targetDate, _ = service.parseDate(transData.TransactionDate, true)
 	transactionRecord.Set("transactionDate", targetDate)
 	transactionRecord.Set("amount", transData.Amount)
-	transactionRecord.Set("loanedAmount", transData.LoanedAmount)
 	transactionRecord.Set("type", transData.PaymentType)
 	transactionRecord.Set("investor", investorId)
 	transactionRecord.Set("customerName", transData.CustomerName)

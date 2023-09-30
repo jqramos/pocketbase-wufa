@@ -43,7 +43,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 
 	//subtract loan amount from investor balance
 	investorBalance = investorBalance - loanAmount
-	var newLoanedAmount = loanedAmount + loanAmount
+	var newLoanedAmount = loanedAmount + (loanAmount * 1.2)
 
 	//update investor balance
 	investorRecord.Set("investmentBalance", investorBalance)
@@ -121,12 +121,17 @@ func getDates(startDate types.DateTime) []types.DateTime {
 	for i := 0; i < 8; i++ {
 		//add one week to startDate
 		trueStart = trueStart.AddDate(0, 0, 7)
+
+		currentDate := time.Now()
+		hour, min, sec := currentDate.Clock()
+		millis := currentDate.Nanosecond() / 1000000
+		trueStart = time.Date(trueStart.Year(), trueStart.Month(), trueStart.Day(), hour, min, sec, millis, time.Local)
+
 		convDate, err := types.ParseDateTime(trueStart)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(trueStart.Format("2006-01-02 08:00:00"))
-		//append to dates
+
 		dates = append(dates, convDate)
 	}
 

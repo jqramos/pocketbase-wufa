@@ -2,9 +2,8 @@ package main
 
 import (
 	"log"
-
-	"myapp/wufa_api"
-	loan_service "myapp/wufa_core"
+	"wufa-app/wufa_api"
+	loan_service "wufa-app/wufa_core"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"

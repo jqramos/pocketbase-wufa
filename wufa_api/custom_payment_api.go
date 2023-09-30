@@ -2,7 +2,7 @@ package wufa_api
 
 import (
 	"log"
-	loan_service "myapp/wufa_core"
+	loan_service "wufa-app/wufa_core"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
