@@ -2,7 +2,7 @@ package loan_service
 
 import (
 	"fmt"
-	"log"
+	"github.com/rs/zerolog/log"
 	"strconv"
 	"time"
 
@@ -20,7 +20,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 	loan, err := app.Dao().FindRecordById(loanCollectionNameOrId, loanId, nil)
 
 	if errs := app.Dao().ExpandRecord(loan, []string{"customerId", "investor"}, nil); len(errs) > 0 {
-		log.Fatalf("failed to expand: %v", errs)
+		log.Error().Err(err).Msg("failed to expand")
 		return fmt.Errorf("failed to expand: %v", errs)
 	}
 	//get investor record
@@ -31,7 +31,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 	investorRecord, fetchErr := app.Dao().FindRecordById(investorCollectionNameOrId, investorRecord.GetString("id"), nil)
 
 	if fetchErr != nil || investorRecord == nil {
-		log.Fatal(fetchErr)
+		log.Error().Err(err).Msg("failed to expand")
 	}
 
 	//get investor balance
@@ -48,6 +48,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 	//update investor balance
 	investorRecord.Set("investmentBalance", investorBalance)
 	investorRecord.Set("loanedAmount", newLoanedAmount)
+	log.Debug().Msgf("loanedAmount: %f", newLoanedAmount)
 	//save investor record
 	if err := app.Dao().SaveRecord(investorRecord); err != nil {
 		return err
@@ -81,7 +82,7 @@ func createPayments(loan *models.Record, investorId string, app core.App, custom
 
 	transactionsCollection, err := app.Dao().FindCollectionByNameOrId(transactionsCollectionNameOrId)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("failed to find collection")
 	}
 
 	//divide amount by 8
@@ -101,7 +102,7 @@ func createPayments(loan *models.Record, investorId string, app core.App, custom
 		//save payment record
 		saveErr := app.Dao().SaveRecord(paymentRecord)
 		if saveErr != nil {
-			log.Fatal(saveErr)
+			log.Error().Err(saveErr).Msg("failed to save record")
 		}
 	}
 
@@ -112,7 +113,7 @@ func getDates(startDate types.DateTime) []types.DateTime {
 	//add oneday to startDate
 	startDate, err := types.ParseDateTime(startDate)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("failed to parse date")
 	}
 	//1 day and 8 hours
 	var trueStart = startDate.Time().AddDate(0, 0, 1)
@@ -129,7 +130,7 @@ func getDates(startDate types.DateTime) []types.DateTime {
 
 		convDate, err := types.ParseDateTime(trueStart)
 		if err != nil {
-			log.Fatal(err)
+			log.Error().Err(err).Msg("failed to parse date")
 		}
 
 		dates = append(dates, convDate)
