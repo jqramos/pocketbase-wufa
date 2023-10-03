@@ -1,10 +1,12 @@
 package loan_service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/rs/zerolog/log"
 	"mime/multipart"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -22,6 +24,7 @@ const (
 	CustomerName        = 4
 	StartDate           = 5
 	TransactionType     = 6
+	CustPrefix          = 7
 )
 
 const (
@@ -50,6 +53,8 @@ type TransData struct {
 }
 
 const customerCollectionNameOrId = "customers"
+
+var customerPrefix = "TMP"
 
 type processorApp struct {
 	app core.App
@@ -103,6 +108,15 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 			}
 			log.Info().Msg("Amount: " + row[Amount])
 
+			//verify cell if out of bounds
+			if len(row) < CustPrefix {
+				log.Info().Msg("CustPrefix is out of bounds")
+			} else if len(row) > CustPrefix && isStringEmpty(row[CustPrefix]) {
+				log.Info().Msg("CustPrefix is empty")
+			} else if len(row) > CustPrefix && row[CustPrefix] != "TMP" && !isStringEmpty(row[CustPrefix]) {
+				customerPrefix = row[CustPrefix]
+			}
+
 			if isStringEmpty(row[PaymentType]) {
 				log.Info().Msg("PaymentType is empty")
 			}
@@ -116,8 +130,11 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 
 			if isStringEmpty(row[CustomerName]) {
 				log.Info().Msg("CustomerName is empty")
+			} else {
+				customerNumber := findNumberDigits(row[CustomerName])
+				transData.CustomerName = fmt.Sprintf("%s %s", customerPrefix, customerNumber)
+				log.Debug().Msg("CustomerName: " + transData.CustomerName)
 			}
-			transData.CustomerName = row[CustomerName]
 
 			if isStringEmpty(row[StartDate]) {
 				log.Info().Msg("StartDate is empty")
@@ -133,6 +150,7 @@ func LoadExcelFileToData(file *multipart.FileHeader, app core.App) (string, erro
 			_, err := service.runDataLoadProcess(*transData)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to run data load process")
+				return "", err
 			}
 
 		}
@@ -147,6 +165,15 @@ func isStringEmpty(str string) bool {
 		return true
 	}
 	return false
+}
+
+func findNumberDigits(str string) string {
+	var number = ""
+	re := regexp.MustCompile(`\d+`)
+	for _, s := range re.FindAllString(str, -1) {
+		number += s
+	}
+	return number
 }
 
 func (service *processorApp) runDataLoadProcess(transData TransData) (string, error) {
@@ -168,6 +195,7 @@ func (service *processorApp) runDataLoadProcess(transData TransData) (string, er
 
 		if !isNewCustomer {
 			var filter = fmt.Sprintf("customerId = '%s' && status = 'Ongoing'", customerRecord.GetId())
+			log.Debug().Msg("Filter: " + filter)
 			//get loans
 			loans, err := service.app.Dao().FindRecordsByFilter(loanCollectionNameOrId, filter, "", 100, 0, nil)
 			if err != nil {
@@ -190,6 +218,14 @@ func (service *processorApp) runDataLoadProcess(transData TransData) (string, er
 			} else {
 				log.Info().Msg("Processing existing loan")
 				isLastPayment := false
+				//log error
+				if len(loans) > 1 {
+					log.Error().Msg("More than 1 loan found")
+					return "Error:  More than 1 loan found", errors.New("More than 1 loan found")
+				} else if len(loans) == 0 {
+					log.Error().Msg("No loan found")
+					return "Error: No loan found", errors.New("No loan found")
+				}
 				var balance = loans[0].GetFloat("remainingBalance") - transData.Amount
 				if balance <= 0 {
 					isLastPayment = true

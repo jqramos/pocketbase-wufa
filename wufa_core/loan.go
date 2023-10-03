@@ -23,7 +23,7 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 		log.Error().Err(err).Msg("failed to expand")
 		return fmt.Errorf("failed to expand: %v", errs)
 	}
-	//get investor record
+
 	investorRecord := loan.ExpandedOne("investor")
 	customer := loan.ExpandedOne("customerId")
 
@@ -34,22 +34,17 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 		log.Error().Err(err).Msg("failed to expand")
 	}
 
-	//get investor balance
 	investorBalance := investorRecord.GetFloat("investmentBalance")
 
-	//get loan amount
 	loanAmount := loan.GetFloat("amount")
 	var loanedAmount = investorRecord.GetFloat("loanedAmount")
 
-	//subtract loan amount from investor balance
 	investorBalance = investorBalance - loanAmount
 	var newLoanedAmount = loanedAmount + (loanAmount * 1.2)
 
-	//update investor balance
 	investorRecord.Set("investmentBalance", investorBalance)
 	investorRecord.Set("loanedAmount", newLoanedAmount)
 	log.Debug().Msgf("loanedAmount: %f", newLoanedAmount)
-	//save investor record
 	if err := app.Dao().SaveRecord(investorRecord); err != nil {
 		return err
 	}
@@ -59,7 +54,6 @@ func TriggerOnCreateLoanSchedule(loanId string, app core.App) error {
 		return err
 	}
 
-	//create transaction record
 	transactionRecord := models.NewRecord(transactionsCollection)
 	transactionRecord.Set("investor", investorRecord.GetString("id"))
 	transactionRecord.Set("type", "DEBIT")
@@ -85,9 +79,8 @@ func createPayments(loan *models.Record, investorId string, app core.App, custom
 		log.Error().Err(err).Msg("failed to find collection")
 	}
 
-	//divide amount by 8
 	var paymentPerWeek = amount / float64(8)
-	//create payment records based on number of dates
+
 	for i := 0; i < len(dates); i++ {
 		//create payment record
 		var weekNumber = i + 1
@@ -110,17 +103,20 @@ func createPayments(loan *models.Record, investorId string, app core.App, custom
 
 func getDates(startDate types.DateTime) []types.DateTime {
 	var dates []types.DateTime
-	//add oneday to startDate
+
 	startDate, err := types.ParseDateTime(startDate)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse date")
 	}
-	//1 day and 8 hours
-	var trueStart = startDate.Time().AddDate(0, 0, 1)
-	trueStart = trueStart.Add(time.Hour * 8)
-	//increment one  week 8 times
+
+	var trueStart = startDate.Time()
+
+	if trueStart.Before(time.Date(2023, 4, 28, 0, 0, 0, 0, time.Local)) {
+		trueStart = trueStart.AddDate(0, 0, 1)
+	}
+
 	for i := 0; i < 8; i++ {
-		//add one week to startDate
+
 		trueStart = trueStart.AddDate(0, 0, 7)
 
 		currentDate := time.Now()
